@@ -21,8 +21,8 @@ Dataset information about Data01/archives:
 ```
 
 ### Screenshots
-This is a sample of a `WARNING` output in Icinga Web 2.
-![Screenshot: ZFS Dataset Stats Check in Icinga 2](img/zfstats-IcingaWeb2.jpg)
+This is a sample output in Icinga Web 2.
+![Screenshot: ZFS Dataset Stats Check in Icinga 2](img/zfsstats-IcingaWeb2.jpg)
 
 You can process your performance data and create cool Grafana dashboards; I'm using templating, so every admin can explicitly select ZFS server and needed dataset on it.
 ![Screenshot: ZFS Dataset Stats Check in Grafana](img/zfsstats-Grafana.jpg)

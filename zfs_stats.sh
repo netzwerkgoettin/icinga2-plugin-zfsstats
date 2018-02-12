@@ -10,9 +10,9 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 
 ##---- Ensure we're using GNU tools
-DATE=$({ which gdate || which date } | tail -1)
-GREP=$({ which ggrep || which grep } | tail -1)
-WC=$({ which gwc || which wc } | tail -1)
+DATE=$({ which gdate || which date; } | tail -1)
+GREP=$({ which ggrep || which grep; } | tail -1)
+WC=$({ which gwc || which wc; } | tail -1)
 
 read -d '' USAGE <<- _EOF_
 $PROG [ -c <critical_space> ] [ -w <warning_space> ] -d <dataset>

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 # Script by Marianne M. Spiller <marianne.spiller@dfki.de>
 # 20180118
 
@@ -10,15 +10,15 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 
 ##---- Ensure we're using GNU tools
-DATE="/usr/gnu/bin/date"
-GREP="/usr/gnu/bin/grep"
-WC="/usr/gnu/bin/wc"
+DATE=$({ which gdate || which date; } | tail -1)
+GREP=$({ which ggrep || which grep; } | tail -1)
+WC=$({ which gwc || which wc; } | tail -1)
 
 read -d '' USAGE <<- _EOF_
 $PROG [ -c <critical_space> ] [ -w <warning_space> ] -d <dataset>
-  -c : Optional: CRITICAL space left for dataset (default: ???)
+  -c : Optional: CRITICAL space left for dataset (default: 5%)
   -d : dataset to check
-  -w : Optional: WARNING space left for dataset (default: ???)
+  -w : Optional: WARNING space left for dataset (default: 10%)
 _EOF_
 
 _usage() {
@@ -60,6 +60,25 @@ cat <<- _EOF_
 _EOF_
 }
 
+_humantoscriptable() {
+VAR=$1
+case $VAR in
+  *K)  
+    VAR=$(echo $(echo $1 | tr -d 'K') \* 1024 | bc -l)
+    ;;
+  *M)
+    VAR=$(echo $(echo $1 | tr -d 'M') \* 1024 \* 1024 | bc -l)
+    ;;
+  *G)
+    VAR=$(echo $(echo $1 | tr -d 'G') \* 1024 \* 1024 \* 1024 | bc -l)
+    ;;
+  *T)
+    VAR=$(echo $(echo $1 | tr -d 'T') \* 1024 \* 1024 \* 1024 \* 1024 | bc -l)
+    ;;
+esac
+echo $VAR
+}
+
 _getopts $@
 
 if [ -z "$ZFS_DATASET" ] ; then
@@ -84,23 +103,24 @@ if [ -z "$CRITICAL_PERCENT" ] ; then
   CRITICAL_PERCENT="5"
 fi
 
-USED=`zfs list -Hp -o used $ZFS_DATASET`
-AVAIL=`zfs list -Hp -o avail $ZFS_DATASET`
-AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`
-REFER=`zfs list -Hp -o refer $ZFS_DATASET`
-QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`
+USED=`zfs list -H -o used $ZFS_DATASET`; USED=$(_humantoscriptable $USED)
+AVAIL=`zfs list -H -o avail $ZFS_DATASET`; AVAIL=$(_humantoscriptable $AVAIL);
+AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`; 
+REFER=`zfs list -H -o refer $ZFS_DATASET`; REFER=$(_humantoscriptable $REFER)
+QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`; QUOTA=$(_humantoscriptable $QUOTA)
 
-if [ "$QUOTA" -eq 0 ] ; then
+if [ $QUOTA -eq 0 ] ; then
   echo "WARNING: no quota set for $ZFS_DATASET. You should consider to set limits. Using overall limits now."
-  QUOTA="$AVAIL"
+  QUOTA=$(echo $USED + $AVAIL | bc -l)
   QUOTA_READABLE="- no quota -"
 else
   QUOTA_READABLE=`zfs get -H -o value quota $ZFS_DATASET`
 fi
 
-DIFF=$(( $QUOTA-$USED ))
-WARNING_VALUE=$(( $USED*$WARNING_PERCENT/100|bc -l ))
-CRITICAL_VALUE=$(( $USED*$CRITICAL_PERCENT/100|bc -l ))
+DIFF=$(echo "$QUOTA - $USED" | bc )
+DIFF=${DIFF%%.*}
+WARNING_VALUE=$(echo $USED*$WARNING_PERCENT/100|bc )
+CRITICAL_VALUE=$(echo $USED*$CRITICAL_PERCENT/100|bc )
 
 ##----------- Informational output follows
 read -d '' FYI <<- _EOF_
@@ -111,12 +131,12 @@ Dataset information about $ZFS_DATASET:
 
 _EOF_
 
-if [ "$DIFF" -lt "$WARNING_VALUE" ] ; then
+if [ $DIFF -lt $CRITICAL_VALUE ] ; then
   echo "CRITICAL: only $AVAIL_READABLE available, dataset $ZFS_DATASET nearly full; consider increasing quota or deleting data."
   echo "$FYI"
   _performance_data
   exit $STATE_CRITICAL
-elif [ "$DIFF" -lt "$CRITICAL_VALUE" ] ; then
+elif [ $DIFF -lt $WARNING_VALUE ] ; then
   echo "WARNING: only $AVAIL_READABLE available, dataset $ZFS_DATASET is getting full. Please investigate."
   echo "$FYI"
   _performance_data

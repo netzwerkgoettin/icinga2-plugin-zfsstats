@@ -117,9 +117,10 @@ else
   QUOTA_READABLE=`zfs get -H -o value quota $ZFS_DATASET`
 fi
 
-DIFF=$(echo $QUOTA - $USED | bc -l )
-WARNING_VALUE=$(echo $USED*$WARNING_PERCENT/100|bc -l )
-CRITICAL_VALUE=$(echo $USED*$CRITICAL_PERCENT/100|bc -l )
+DIFF=$(echo "($QUOTA - $USED) * 1" | bc )
+DIFF=${DIFF%%.*}
+WARNING_VALUE=$(echo $USED*$WARNING_PERCENT/100|bc )
+CRITICAL_VALUE=$(echo $USED*$CRITICAL_PERCENT/100|bc )
 
 ##----------- Informational output follows
 read -d '' FYI <<- _EOF_

@@ -60,6 +60,16 @@ cat <<- _EOF_
 _EOF_
 }
 
+_humantoscriptable() {
+case $1 in
+  *K)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 | bc -l)
+  *M)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 * 1024 | bc -l)
+  *G)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 * 1024 * 1024 | bc -l)
+  *T)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 * 1024 * 1024 * 1024 | bc -l)
+esac
+return $VAR
+}
+
 _getopts $@
 
 if [ -z "$ZFS_DATASET" ] ; then
@@ -84,11 +94,11 @@ if [ -z "$CRITICAL_PERCENT" ] ; then
   CRITICAL_PERCENT="5"
 fi
 
-USED=`zfs list -H -o used $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
-AVAIL=`zfs list -H -o avail $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
-AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
-REFER=`zfs list -H -o refer $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
-QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
+USED=`zfs list -H -o used $ZFS_DATASET`; USED=_humantoscriptable $USED
+AVAIL=`zfs list -H -o avail $ZFS_DATASET`; AVAIL=_humantoscriptable $AVAIL
+AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`; AVAIL_READABLE=_humantoscriptable $AVAIL_READABLE
+REFER=`zfs list -H -o refer $ZFS_DATASET`; REFER=_humantoscriptable $REFER
+QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`; QUOTA=_humantoscriptable $QUOTA
 
 if [ "$QUOTA" -eq 0 ] ; then
   echo "WARNING: no quota set for $ZFS_DATASET. You should consider to set limits. Using overall limits now."

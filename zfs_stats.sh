@@ -84,11 +84,11 @@ if [ -z "$CRITICAL_PERCENT" ] ; then
   CRITICAL_PERCENT="5"
 fi
 
-USED=`zfs list -H -o used $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -s '/G/000000000/g'`
-AVAIL=`zfs list -H -o avail $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -s '/G/000000000/g'`
-AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -s '/G/000000000/g'`
-REFER=`zfs list -H -o refer $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -s '/G/000000000/g'`
-QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -s '/G/000000000/g'`
+USED=`zfs list -H -o used $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
+AVAIL=`zfs list -H -o avail $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
+AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
+REFER=`zfs list -H -o refer $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
+QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET | sed -e 's/K/000/g' -e 's/M/000000/g' -e 's/G/000000000/g'`
 
 if [ "$QUOTA" -eq 0 ] ; then
   echo "WARNING: no quota set for $ZFS_DATASET. You should consider to set limits. Using overall limits now."

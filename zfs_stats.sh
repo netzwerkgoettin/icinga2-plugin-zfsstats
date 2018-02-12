@@ -104,8 +104,8 @@ if [ -z "$CRITICAL_PERCENT" ] ; then
 fi
 
 USED=`zfs list -H -o used $ZFS_DATASET`; USED=$(_humantoscriptable $USED)
-AVAIL=`zfs list -H -o avail $ZFS_DATASET`; AVAIL=$(_humantoscriptable $AVAIL)
-AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`; AVAIL_READABLE=$(_humantoscriptable $AVAIL_READABLE)
+AVAIL=`zfs list -H -o avail $ZFS_DATASET`; AVAIL=$(_humantoscriptable $AVAIL); AVAIL=$(echo $USED + $AVAIL | bc -l)
+AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`; 
 REFER=`zfs list -H -o refer $ZFS_DATASET`; REFER=$(_humantoscriptable $REFER)
 QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`; QUOTA=$(_humantoscriptable $QUOTA)
 
@@ -117,9 +117,9 @@ else
   QUOTA_READABLE=`zfs get -H -o value quota $ZFS_DATASET`
 fi
 
-DIFF=$(expr $QUOTA-$USED )
-WARNING_VALUE=$(expr $USED*$WARNING_PERCENT/100|bc -l )
-CRITICAL_VALUE=$(expr $USED*$CRITICAL_PERCENT/100|bc -l )
+DIFF=$(echo $QUOTA - $USED | bc -l )
+WARNING_VALUE=$(echo $USED*$WARNING_PERCENT/100|bc -l )
+CRITICAL_VALUE=$(echo $USED*$CRITICAL_PERCENT/100|bc -l )
 
 ##----------- Informational output follows
 read -d '' FYI <<- _EOF_

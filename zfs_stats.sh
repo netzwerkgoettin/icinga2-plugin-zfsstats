@@ -16,9 +16,9 @@ WC=$({ which gwc || which wc; } | tail -1)
 
 read -d '' USAGE <<- _EOF_
 $PROG [ -c <critical_space> ] [ -w <warning_space> ] -d <dataset>
-  -c : Optional: CRITICAL space left for dataset (default: ???)
+  -c : Optional: CRITICAL space left for dataset (default: 5%)
   -d : dataset to check
-  -w : Optional: WARNING space left for dataset (default: ???)
+  -w : Optional: WARNING space left for dataset (default: 10%)
 _EOF_
 
 _usage() {
@@ -131,12 +131,12 @@ Dataset information about $ZFS_DATASET:
 
 _EOF_
 
-if [ $DIFF -lt $WARNING_VALUE ] ; then
+if [ $DIFF -lt $CRITICAL_VALUE ] ; then
   echo "CRITICAL: only $AVAIL_READABLE available, dataset $ZFS_DATASET nearly full; consider increasing quota or deleting data."
   echo "$FYI"
   _performance_data
   exit $STATE_CRITICAL
-elif [ $DIFF -lt $CRITICAL_VALUE ] ; then
+elif [ $DIFF -lt $WARNING_VALUE ] ; then
   echo "WARNING: only $AVAIL_READABLE available, dataset $ZFS_DATASET is getting full. Please investigate."
   echo "$FYI"
   _performance_data

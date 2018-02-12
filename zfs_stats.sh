@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 # Script by Marianne M. Spiller <marianne.spiller@dfki.de>
 # 20180118
 
@@ -10,9 +10,9 @@ STATE_CRITICAL=2
 STATE_UNKNOWN=3
 
 ##---- Ensure we're using GNU tools
-DATE="/usr/gnu/bin/date"
-GREP="/usr/gnu/bin/grep"
-WC="/usr/gnu/bin/wc"
+DATE=$({ which gdate || which date } | tail -1)
+GREP=$({ which ggrep || which grep } | tail -1)
+WC=$({ which gwc || which wc } | tail -1)
 
 read -d '' USAGE <<- _EOF_
 $PROG [ -c <critical_space> ] [ -w <warning_space> ] -d <dataset>
@@ -84,10 +84,10 @@ if [ -z "$CRITICAL_PERCENT" ] ; then
   CRITICAL_PERCENT="5"
 fi
 
-USED=`zfs list -Hp -o used $ZFS_DATASET`
-AVAIL=`zfs list -Hp -o avail $ZFS_DATASET`
+USED=`zfs list -H -o used $ZFS_DATASET`
+AVAIL=`zfs list -H -o avail $ZFS_DATASET`
 AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`
-REFER=`zfs list -Hp -o refer $ZFS_DATASET`
+REFER=`zfs list -H -o refer $ZFS_DATASET`
 QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`
 
 if [ "$QUOTA" -eq 0 ] ; then

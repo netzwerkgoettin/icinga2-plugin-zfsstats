@@ -118,8 +118,8 @@ else
 fi
 
 DIFF=$(expr $QUOTA-$USED )
-WARNING_VALUE=$(( $USED*$WARNING_PERCENT/100|bc -l ))
-CRITICAL_VALUE=$(( $USED*$CRITICAL_PERCENT/100|bc -l ))
+WARNING_VALUE=$(expr $USED*$WARNING_PERCENT/100|bc -l )
+CRITICAL_VALUE=$(expr $USED*$CRITICAL_PERCENT/100|bc -l )
 
 ##----------- Informational output follows
 read -d '' FYI <<- _EOF_

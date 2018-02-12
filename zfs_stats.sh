@@ -61,13 +61,22 @@ _EOF_
 }
 
 _humantoscriptable() {
-case $1 in
-  *K)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 | bc -l)
-  *M)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 * 1024 | bc -l)
-  *G)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 * 1024 * 1024 | bc -l)
-  *T)  VAR=$(echo $(echo $1 | cut -d 'K') * 1024 * 1024 * 1024 * 1024 | bc -l)
+VAR=$1
+case $VAR in
+  *K)  
+    VAR=$(echo $(echo $1 | tr -d 'K') \* 1024 | bc -l)
+    ;;
+  *M)
+    VAR=$(echo $(echo $1 | tr -d 'M') \* 1024 \* 1024 | bc -l)
+    ;;
+  *G)
+    VAR=$(echo $(echo $1 | tr -d 'G') \* 1024 \* 1024 \* 1024 | bc -l)
+    ;;
+  *T)
+    VAR=$(echo $(echo $1 | tr -d 'T') \* 1024 \* 1024 \* 1024 \* 1024 | bc -l)
+    ;;
 esac
-return $VAR
+echo $VAR
 }
 
 _getopts $@
@@ -94,13 +103,13 @@ if [ -z "$CRITICAL_PERCENT" ] ; then
   CRITICAL_PERCENT="5"
 fi
 
-USED=`zfs list -H -o used $ZFS_DATASET`; USED=_humantoscriptable $USED
-AVAIL=`zfs list -H -o avail $ZFS_DATASET`; AVAIL=_humantoscriptable $AVAIL
-AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`; AVAIL_READABLE=_humantoscriptable $AVAIL_READABLE
-REFER=`zfs list -H -o refer $ZFS_DATASET`; REFER=_humantoscriptable $REFER
-QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`; QUOTA=_humantoscriptable $QUOTA
+USED=`zfs list -H -o used $ZFS_DATASET`; USED=$(_humantoscriptable $USED)
+AVAIL=`zfs list -H -o avail $ZFS_DATASET`; AVAIL=$(_humantoscriptable $AVAIL)
+AVAIL_READABLE=`zfs list -H -o avail $ZFS_DATASET`; AVAIL_READABLE=$(_humantoscriptable $AVAIL_READABLE)
+REFER=`zfs list -H -o refer $ZFS_DATASET`; REFER=$(_humantoscriptable $REFER)
+QUOTA=`zfs get -Hp -o value quota $ZFS_DATASET`; QUOTA=$(_humantoscriptable $QUOTA)
 
-if [ "$QUOTA" -eq 0 ] ; then
+if [ $QUOTA -eq 0 ] ; then
   echo "WARNING: no quota set for $ZFS_DATASET. You should consider to set limits. Using overall limits now."
   QUOTA="$AVAIL"
   QUOTA_READABLE="- no quota -"
@@ -108,7 +117,7 @@ else
   QUOTA_READABLE=`zfs get -H -o value quota $ZFS_DATASET`
 fi
 
-DIFF=$(( $QUOTA-$USED ))
+DIFF=$(expr $QUOTA-$USED )
 WARNING_VALUE=$(( $USED*$WARNING_PERCENT/100|bc -l ))
 CRITICAL_VALUE=$(( $USED*$CRITICAL_PERCENT/100|bc -l ))
 
@@ -121,12 +130,12 @@ Dataset information about $ZFS_DATASET:
 
 _EOF_
 
-if [ "$DIFF" -lt "$WARNING_VALUE" ] ; then
+if [ $DIFF -lt $WARNING_VALUE ] ; then
   echo "CRITICAL: only $AVAIL_READABLE available, dataset $ZFS_DATASET nearly full; consider increasing quota or deleting data."
   echo "$FYI"
   _performance_data
   exit $STATE_CRITICAL
-elif [ "$DIFF" -lt "$CRITICAL_VALUE" ] ; then
+elif [ $DIFF -lt $CRITICAL_VALUE ] ; then
   echo "WARNING: only $AVAIL_READABLE available, dataset $ZFS_DATASET is getting full. Please investigate."
   echo "$FYI"
   _performance_data

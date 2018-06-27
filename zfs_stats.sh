@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Script by Marianne M. Spiller <marianne.spiller@dfki.de>
-# 20180118
+# 20180627 - print dataset and filesystem stats when -d is not given
+# 20180118 - initial commit
 
 PROG=`basename $0`
 ##---- Defining Icinga 2 exit states
@@ -15,6 +16,7 @@ GREP="/usr/gnu/bin/grep"
 WC="/usr/gnu/bin/wc"
 
 read -d '' USAGE <<- _EOF_
+$PROG - list all available datasets, filesystem and print usage instructions
 $PROG [ -c <critical_space> ] [ -w <warning_space> ] -d <dataset>
   -c : Optional: CRITICAL space left for dataset (default: ???)
   -d : dataset to check
@@ -22,6 +24,7 @@ $PROG [ -c <critical_space> ] [ -w <warning_space> ] -d <dataset>
 _EOF_
 
 _usage() {
+  echo "==== USAGE ===="
   echo "$USAGE"
   exit $STATE_WARNING
 }
@@ -37,18 +40,12 @@ _getopts() {
         ;;
       h)
         _usage
-        exit $STATE_OK
         ;;
       w)
         WARNING_PERCENT="$OPTARG"
         ;;
-     '')
-        _usage
-        break
-        ;;
       *) echo "Invalid option --$OPTARG1"
         _usage
-        exit $STATE_WARNING
         ;;
     esac
   done
@@ -60,17 +57,25 @@ cat <<- _EOF_
 _EOF_
 }
 
+_print_stats() {
+  echo "==== ZFS DATASETS ===="
+  zpool list
+  echo " "
+  echo "==== ZFS FILESYSTEMS ===="
+  zfs list -t filesystem
+  echo " "
+}
+
 _getopts $@
 
 if [ -z "$ZFS_DATASET" ] ; then
-  echo "Please define ZFS dataset using -d <dataset> option"
+  ## We're missing a dataset, so we'll print the stats
+  _print_stats
   _usage
-  exit $STATE_UNKNOWN
 fi
 
 if ! zfs list $ZFS_DATASET > /dev/null 2>&1; then
-  echo "'$ZFS_DATASET' is not a ZFS dataset!"
-  _usage
+  echo "'$ZFS_DATASET' is not a ZFS dataset - try $PROG without any parameter to get a list of valid datasets!"
   exit $STATE_UNKNOWN
 fi
 
